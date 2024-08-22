@@ -3,12 +3,15 @@ import './App.css';
 
 import CustomerList from "./assets/components/CustomerList";
 import CustomerAddUpdateForm from "./assets/components/CustomerAddUpdateForm";
-// import customer_data from "./assets/data/customers.json";
+import axios from 'axios'
 
 import * as lib from "./memdb.js";
 
 function App() {
-
+  const REST_URL = "http://localhost:8080/api/customers";
+  var config = {
+    headers: {'Access-Control-Allow-Origin': '*'}
+  };
   let blankCustomer = { "id": -1, "name": "", "email": "", "password": "" };
 
   const [customer, setCustomer] = useState([]);
@@ -31,34 +34,38 @@ function App() {
     setFormObject(newFormObject);
   }
 
-  useEffect(() => {getCustomers()}, [formObject])
+  useEffect(() => {getCustomers()}, [formObject]);
   
-  const getCustomers = function () {
-    console.log("fetching");
-    setCustomer(lib.getAll);
+  const getCustomers = async () => {
+    try{
+      const response = await axios.get(`${REST_URL}`, config);
+      setCustomer(response.data);
+    } catch(error){
+      console.log("error fetching customers: ", error);
+    }
+    
   }
 
   function onCancelClick(){
     setFormObject(blankCustomer);
   }
 
-  function onDeleteClick(){
+  const onDeleteClick = async () => {
     if(formObject.id >=0){
-      lib.deleteById(formObject.id);
+      const response = await axios.delete(`${REST_URL}/${formObject.id}`, JSON.stringify(formObject), config);
     }
     setFormObject(blankCustomer);
   }
 
-  function onSaveClick(){
-    //let postopCallBack = () => {setFormObject(blankCustomer)}
+  const onSaveClick = async () => {
+    console.log(formObject)
     if (mode === "Update"){
-      console.log("heelo")
-      lib.put(formObject.id, formObject)
-      setFormObject(blankCustomer);
+      const response = await axios.put(`${REST_URL}/${formObject.id}`, formObject, config);
+      
     }
     if (mode === "Add") {
-      lib.post(formObject)
-      setFormObject(blankCustomer);      
+      const response = await axios.post(`${REST_URL}`, formObject, config);
+           
     }
   }  
 
